@@ -149,7 +149,7 @@ function _finish_release(eff; release_branch="release", project="Project.toml")
     _run(eff, `git checkout master`)
     _run(eff, `git merge $release_branch`)
     _run(eff, `git branch --delete $release_branch`)
-    _run(eff, `git push master $tag`)
+    _run(eff, `git push origin master $tag`)
 end
 
 escape_query_params(query) =
