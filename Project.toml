@@ -3,6 +3,12 @@ uuid = "79d5acb4-bed4-5e61-b078-8b6f8bc152cd"
 authors = ["Takafumi Arakaki <aka.tkf@gmail.com>"]
 version = "0.1.0"
 
+[deps]
+DefaultApplication = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+URIParser = "30578b45-9adc-5946-b283-645ec420af67"
+
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
