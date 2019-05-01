@@ -25,6 +25,8 @@ function assert_clean_repo()
     end
 end
 
+versiontag(version::VersionNumber) = string("v", version)
+
 function bump_version(version=nothing; project="Project.toml", commit=false)
     if commit
         assert_clean_repo()
@@ -50,7 +52,7 @@ function bump_version(version=nothing; project="Project.toml", commit=false)
     if commit
         msg = "Bump to $version"
         run(`git commit -m $msg -- $project`)
-        run(`git tag $(string("v", version))`)
+        run(`git tag $(versiontag(version))`)
     end
     return prj
 end
@@ -80,13 +82,19 @@ end
     finish_release()
 
 Finalize release process.
+
+* Merge release branch to `master`.
+* Remove the release branch.
+* Push `master` and the tag.
 """
-function finish_release(; release_branch="release")
-    error("Not implemented")
+function finish_release(; release_branch="release", project="Project.toml")
     assert_clean_repo()
+    prj = TOML.parsefile(project)
+    tag = versiontag(VersionNumber(prj["version"]))
     run(`git checkout master`)
     run(`git merge $release_branch`)
     run(`git branch --delete $release_branch`)
+    run(`git push master $tag`)
 end
 
 escape_query_params(query) =
