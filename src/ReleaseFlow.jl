@@ -13,6 +13,7 @@ module ReleaseFlow
 
 using DefaultApplication
 using Pkg: TOML
+using Pkg.Types: write_project
 using Setfield
 using URIParser
 
@@ -80,9 +81,7 @@ function _bump_version(eff, version=nothing;
     if dry_run
         @info "Dry run: $project would be modified (skipped)."
     else
-        open(project, write=true) do io
-            TOML.print(io, prj)
-        end
+        write_project(prj, project)
     end
     if commit
         msg = "Bump to $version"
