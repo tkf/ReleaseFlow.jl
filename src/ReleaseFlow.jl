@@ -29,9 +29,13 @@ end
 versiontag(version::VersionNumber) = string("v", version)
 
 """
-    bump_version([version]; [project], [commit])
+    bump_version([version]; <keyword arguments>)
 
 Bump version to `version`.
+
+# Keyword Arguments
+- `project::String`
+- `commit::Bool`
 """
 function bump_version(version=nothing; project="Project.toml", commit=false)
     if commit
@@ -64,7 +68,7 @@ function bump_version(version=nothing; project="Project.toml", commit=false)
 end
 
 """
-    start_release(; [release_branch])
+    start_release(; <keyword arguments>)
 
 Start release process.
 
@@ -72,6 +76,10 @@ Start release process.
 * Bump the version from vX.Y.Z-DEV to vX.Y.Z.
 * Push the release branch.
 * Open a PR to trigger `@JuliaRegistrator` bot.
+
+# Keyword Arguments
+- `dry_run::Bool`
+- `release_branch::String`
 """
 function start_release(; dry_run=false, release_branch="release")
     _run = dry_run ? (cmd -> @info "Dry run: $cmd") : run
@@ -80,7 +88,7 @@ function start_release(; dry_run=false, release_branch="release")
     repo = m.captures[1]
 
     _run(`git checkout -b $release_branch`)
-    prj = bump_version(commit=true)
+    dry_run && (prj = bump_version(commit=true))
     _run(`git push -u origin $release_branch`)
     dry_run && return
     github_new_issue(
@@ -99,6 +107,11 @@ Finalize release process.
 * Merge release branch to `master`.
 * Remove the release branch.
 * Push `master` and the tag.
+
+# Keyword Arguments
+- `dry_run::Bool`
+- `release_branch::String`
+- `project::String`
 """
 function finish_release(; dry_run=false,
                         release_branch="release", project="Project.toml")
