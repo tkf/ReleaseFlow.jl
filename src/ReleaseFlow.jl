@@ -54,7 +54,7 @@ Bump version to `version`.
 - `dry_run::Bool`
 """
 bump_version(version=nothing; dry_run=false, kwargs...) =
-    _bump_version(version, dry_run ? DryRun() : Perform(); kwargs...)
+    _bump_version(dry_run ? DryRun() : Perform(), version; kwargs...)
 
 function _bump_version(eff, version=nothing;
                        project="Project.toml", commit=false)
