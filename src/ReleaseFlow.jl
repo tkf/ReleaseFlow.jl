@@ -62,14 +62,16 @@ end
 
 Start release process.
 """
-function start_release(; release_branch="release")
+function start_release(; dry_run=false, release_branch="release")
+    _run = dry_run ? (cmd -> @info "Dry run: $cmd") : run
     m = match(r"github\.com[:/](.*?)(\.git)?$",
               read(`git config --get remote.origin.url`, String))
     repo = m.captures[1]
 
-    run(`git checkout -b $release_branch`)
+    _run(`git checkout -b $release_branch`)
     prj = bump_version(commit=true)
-    run(`git push -u origin $release_branch`)
+    _run(`git push -u origin $release_branch`)
+    dry_run && return
     github_new_issue(
         repo;
         title = "Release $(prj["version"])",
@@ -87,14 +89,16 @@ Finalize release process.
 * Remove the release branch.
 * Push `master` and the tag.
 """
-function finish_release(; release_branch="release", project="Project.toml")
+function finish_release(; dry_run=false,
+                        release_branch="release", project="Project.toml")
+    _run = dry_run ? (cmd -> @info "Dry run: $cmd") : run
     assert_clean_repo()
     prj = TOML.parsefile(project)
     tag = versiontag(VersionNumber(prj["version"]))
-    run(`git checkout master`)
-    run(`git merge $release_branch`)
-    run(`git branch --delete $release_branch`)
-    run(`git push master $tag`)
+    _run(`git checkout master`)
+    _run(`git merge $release_branch`)
+    _run(`git branch --delete $release_branch`)
+    _run(`git push master $tag`)
 end
 
 escape_query_params(query) =
