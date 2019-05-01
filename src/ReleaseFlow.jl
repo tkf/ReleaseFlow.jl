@@ -4,6 +4,7 @@
 Entry points:
 
 ```julia
+bump_version()
 start_release()
 finish_release()
 ```
@@ -27,6 +28,11 @@ end
 
 versiontag(version::VersionNumber) = string("v", version)
 
+"""
+    bump_version([version]; [project], [commit])
+
+Bump version to `version`.
+"""
 function bump_version(version=nothing; project="Project.toml", commit=false)
     if commit
         assert_clean_repo()
@@ -61,6 +67,11 @@ end
     start_release(; [release_branch])
 
 Start release process.
+
+* Checkout the release branch.
+* Bump the version from vX.Y.Z-DEV to vX.Y.Z.
+* Push the release branch.
+* Open a PR to trigger `@JuliaRegistrator` bot.
 """
 function start_release(; dry_run=false, release_branch="release")
     _run = dry_run ? (cmd -> @info "Dry run: $cmd") : run
