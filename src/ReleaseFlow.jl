@@ -33,8 +33,7 @@ function bump_version(version=nothing; project="Project.toml", commit=false)
 
     prev = VersionNumber(prj["version"])
     if version === nothing
-        version = VersionNumber(prev)
-        @set! version.prerelease = ()
+        version = @set prev.prerelease = ()
     end
     if version < prev
         error("""
@@ -84,6 +83,10 @@ Finalize release process.
 """
 function finish_release(; release_branch="release")
     error("Not implemented")
+    assert_clean_repo()
+    run(`git checkout master`)
+    run(`git merge $release_branch`)
+    run(`git branch --delete $release_branch`)
 end
 
 escape_query_params(query) =
