@@ -49,12 +49,19 @@ versiontag(version::VersionNumber) = string("v", version)
 
 Bump version to `version`.
 
+# Arguments
+- `version::Union{VersionNumber,Nothing}`
+
 # Keyword Arguments
 - `project::String`
 - `commit::Bool`
 - `dry_run::Bool`
 """
-bump_version(version=nothing; dry_run=false, kwargs...) =
+bump_version(
+    version::Union{VersionNumber, Nothing} = nothing;
+    dry_run::Bool = false,
+    kwargs...
+) =
     _bump_version(dry_run ? DryRun() : Perform(), version; kwargs...)
 
 function _bump_version(eff, version=nothing;
@@ -92,7 +99,7 @@ function _bump_version(eff, version=nothing;
 end
 
 """
-    start_release(; <keyword arguments>)
+    start_release([version]; <keyword arguments>)
 
 Start release process.
 
@@ -101,20 +108,30 @@ Start release process.
 * Push the release branch.
 * Open a PR to trigger `@JuliaRegistrator` bot.
 
+# Arguments
+- `version::Union{VersionNumber,Nothing}`
+
 # Keyword Arguments
 - `dry_run::Bool`
 - `release_branch::String`
 """
-start_release(; dry_run=false, kwargs...) =
-    _start_release(dry_run ? DryRun() : Perform(); kwargs...)
+start_release(
+    version::Union{VersionNumber, Nothing} = nothing;
+    dry_run::Bool = false,
+    kwargs...
+) =
+    _start_release(
+        dry_run ? DryRun() : Perform(),
+        version;
+        kwargs...)
 
-function _start_release(eff; release_branch="release")
+function _start_release(eff, version; release_branch="release")
     m = match(r"github\.com[:/](.*?)(\.git)?$",
               read(`git config --get remote.origin.url`, String))
     repo = m.captures[1]
 
     _run(eff, `git checkout -b $release_branch`)
-    prj = _bump_version(eff; commit=true)
+    prj = _bump_version(eff, version; commit=true)
     _run(eff, `git push -u origin $release_branch`)
     _github_new_issue(
         eff, repo;
