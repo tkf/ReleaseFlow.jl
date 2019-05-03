@@ -65,7 +65,7 @@ bump_version(
     _bump_version(dry_run ? DryRun() : Perform(), version; kwargs...)
 
 function _bump_version(eff, version=nothing;
-                       project="Project.toml", commit=false)
+                       project="Project.toml", commit=false, tag=false)
     dry_run = isdryrun(eff)
     if commit
         assert_clean_repo(eff)
@@ -93,7 +93,9 @@ function _bump_version(eff, version=nothing;
     if commit
         msg = "Bump to $version"
         _run(eff, `git commit -m $msg -- $project`)
-        _run(eff, `git tag $(versiontag(version))`)
+        if tag
+            _run(eff, `git tag $(versiontag(version))`)
+        end
     end
     return prj
 end
@@ -131,7 +133,7 @@ function _start_release(eff, version; release_branch="release")
     repo = m.captures[1]
 
     _run(eff, `git checkout -b $release_branch`)
-    prj = _bump_version(eff, version; commit=true)
+    prj = _bump_version(eff, version; commit=true, tag=true)
     _run(eff, `git push -u origin $release_branch`)
     _github_new_issue(
         eff, repo;
