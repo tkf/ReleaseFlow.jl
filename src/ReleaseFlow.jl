@@ -74,7 +74,13 @@ function _bump_version(eff, version=nothing;
 
     prev = VersionNumber(prj["version"])
     if version === nothing
-        version = @set prev.prerelease = ()
+        if prev.prerelease == ()
+            version = prev
+            @set! version.prerelease = ("DEV",)
+            @set! version.patch += 1
+        else
+            version = @set prev.prerelease = ()
+        end
     end
     if version < prev
         error("""
@@ -83,6 +89,7 @@ function _bump_version(eff, version=nothing;
         Specified:  $version
         """)
     end
+    @info "Bump: $prev → $version"
     prj["version"] = string(version)
 
     if dry_run
