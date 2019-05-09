@@ -57,19 +57,25 @@ Bump version to `version`.
 - `commit::Bool`
 - `dry_run::Bool`
 """
-bump_version(
+function bump_version(
     version::Union{VersionNumber, Nothing} = nothing;
     dry_run::Bool = false,
+    commit::Bool = false,
     kwargs...
-) =
-    _bump_version(dry_run ? DryRun() : Perform(), version; kwargs...)
+)
+    eff = dry_run ? DryRun() : Perform()
+    if commit
+        assert_clean_repo(eff)
+    end
+    return _bump_version(
+        eff, version;
+        commit = commit,
+        kwargs...)
+end
 
 function _bump_version(eff, version=nothing;
                        project="Project.toml", commit=false, tag=false)
     dry_run = isdryrun(eff)
-    if commit
-        assert_clean_repo(eff)
-    end
     prj = TOML.parsefile(project)
 
     prev = VersionNumber(prj["version"])
@@ -108,6 +114,84 @@ function _bump_version(eff, version=nothing;
 end
 
 """
+    replace_commits_since(version; <keyword arguments>)
+
+# Arguments
+- `version::VersionNumber`
+
+# Keyword Arguments
+- `dry_run::Bool`
+- `readme_path::String`
+"""
+replace_commits_since(
+    version::Union{VersionNumber, Nothing} = nothing;
+    dry_run::Bool = false,
+    kwargs...
+) = _replace_commits_since(
+    dry_run ? DryRun() : Perform(),
+    version;
+    kwargs...)
+
+function _replace_commits_since(
+    eff::SideEffect,
+    version;
+    readme_path::String = "README.md",
+)
+    orig = read(readme_path, String)
+    origmatch = match(rx_commits_since, orig)
+    if origmatch === nothing
+        @info "No commits-since badge found in $readme_path"
+        return
+    end
+    readme = replace_commits_since_impl((
+        path = readme_path,
+        orig = orig,
+        origmatch = origmatch,
+        tag = versiontag(version),
+    ))
+    message_readme_change(readme)
+    return write_replace_commits_since(eff, readme)
+end
+
+const rx_commits_since =
+    r"(https://img\.shields\.io/github/commits-since/[^/]+/[^/]+/)(v[0-9\.]+)(\.svg)"
+
+function replace_commits_since_impl(readme)
+    subst = SubstitutionString(string(
+        s"\1",
+        readme.tag,
+        s"\3",
+    ))
+    return (
+        content = replace(readme.orig, rx_commits_since => subst),
+        readme...,
+    )
+end
+
+function message_readme_change(readme)
+    origmatch = readme.origmatch
+    newmatch = match(rx_commits_since, readme.content) :: RegexMatch
+    tagmetavar = raw"$tag"
+    url = string(
+        origmatch.captures[1],
+        tagmetavar,
+        origmatch.captures[3],
+    )
+    @info """
+    Replacing `$tagmetavar` in `$url`
+    From: $(origmatch.captures[2])
+    To  : $(newmatch.captures[2])
+    """
+end
+
+write_replace_commits_since(::DryRun, readme) = readme
+
+function write_replace_commits_since(::Perform, readme)
+    write(readme.path, readme.content)
+    return readme
+end
+
+"""
     start_release([version]; <keyword arguments>)
 
 Start release process.
@@ -140,6 +224,8 @@ function _start_release(eff, version; release_branch="release")
     repo = m.captures[1]
 
     _run(eff, `git checkout -b $release_branch`)
+    assert_clean_repo(eff)
+    _replace_commits_since(eff, version)
     prj = _bump_version(eff, version; commit=true, tag=true)
     _run(eff, `git push -u origin $release_branch`)
     _github_new_issue(
