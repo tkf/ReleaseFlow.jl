@@ -1,6 +1,11 @@
-using ReleaseFlow
+module TestReleaseFlow
+
 using Test
 
-@testset "ReleaseFlow.jl" begin
-    # Write your own tests here.
+@testset "$path" for path in [
+    "test_replace_commits.jl"
+]
+    include(path)
 end
+
+end  # module
