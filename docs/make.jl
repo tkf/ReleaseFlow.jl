@@ -9,7 +9,6 @@ makedocs(;
     repo="https://github.com/tkf/ReleaseFlow.jl/blob/{commit}{path}#L{line}",
     sitename="ReleaseFlow.jl",
     authors="Takafumi Arakaki",
-    assets=[],
 )
 
 deploydocs(;
