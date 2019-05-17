@@ -78,8 +78,17 @@ function _bump_version(eff, version=nothing;
     dry_run = isdryrun(eff)
     prj = TOML.parsefile(project)
 
-    prev = VersionNumber(prj["version"])
+    prev = if haskey(prj, "version")
+        VersionNumber(prj["version"])
+    end
     if version === nothing
+        if prev === nothing
+            error("""
+            Please specify `version`.
+            As `version` not found in `Project.toml`, a new version cannot
+            be guessed from the previous version.
+            """)
+        end
         if prev.prerelease == ()
             version = prev
             @set! version.prerelease = ("DEV",)
@@ -88,14 +97,14 @@ function _bump_version(eff, version=nothing;
             version = @set prev.prerelease = ()
         end
     end
-    if version < prev
+    if prev !== nothing && version < prev
         error("""
         Version number must be increased.
         Previous:   $prev
         Specified:  $version
         """)
     end
-    @info "Bump: $prev → $version"
+    @info "Bump: $(something(prev, "not set")) → $version"
     prj["version"] = string(version)
 
     if dry_run
