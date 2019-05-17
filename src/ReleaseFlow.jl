@@ -97,7 +97,7 @@ function _bump_version(eff, version=nothing;
             version = @set prev.prerelease = ()
         end
     end
-    if prev !== nothing && version < prev
+    if prev !== nothing && version <= prev
         error("""
         Version number must be increased.
         Previous:   $prev
