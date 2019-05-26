@@ -216,6 +216,7 @@ Start release process.
 # Keyword Arguments
 - `dry_run::Bool`
 - `release_branch::String`
+- `bump_version::Bool = true`
 """
 start_release(
     version::Union{VersionNumber, Nothing} = nothing;
@@ -227,7 +228,17 @@ start_release(
         version;
         kwargs...)
 
-function _start_release(eff, version; release_branch="release")
+function _start_release(
+    eff,
+    version;
+    release_branch = "release",
+    bump_version = true,
+)
+    # Maybe move `project` to keyword argument.  However, all code
+    # below now assumes that cwd is in the project.  This assumption
+    # has to be removed first.
+    project = "Project.toml"
+
     m = match(r"github\.com[:/](.*?)(\.git)?$",
               read(`git config --get remote.origin.url`, String))
     repo = m.captures[1]
@@ -235,7 +246,14 @@ function _start_release(eff, version; release_branch="release")
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
     _replace_commits_since(eff, version)
-    prj = _bump_version(eff, version; commit=true, tag=true)
+    if bump_version
+        prj = _bump_version(eff, version; commit=true, tag=true)
+    else
+        prj = TOML.parsefile(project)
+        if !haskey(prj, "version")
+            error("`$project` does not have `version`.")
+        end
+    end
     _run(eff, `git push -u origin $release_branch`)
     _github_new_issue(
         eff, repo;
