@@ -254,6 +254,14 @@ function _start_release(
             error("`$project` does not have `version`.")
         end
     end
+    if !(haskey(prj, "compat") && haskey(prj["compat"], "julia"))
+        error("""
+        No Julia compatibility information.  Add the following in $project:
+
+            [compat]
+            julia = "1"
+        """)
+    end
     _run(eff, `git push -u origin $release_branch`)
     _github_new_issue(
         eff, repo;
