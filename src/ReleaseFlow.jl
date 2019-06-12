@@ -24,7 +24,7 @@ struct DryRun <: SideEffect end
 isdryrun(::SideEffect) = false
 isdryrun(::DryRun) = true
 
-_run(::Perform, cmd) = run(cmd)
+_run(::Perform, cmd) = (@info "Run: $cmd"; run(cmd))
 _run(::DryRun, cmd) = @info "Dry run: $cmd"
 
 _error(::Perform, msg) = error(msg)
