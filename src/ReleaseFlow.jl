@@ -73,8 +73,14 @@ function bump_version(
         kwargs...)
 end
 
-function _bump_version(eff, version=nothing;
-                       project="Project.toml", commit=false, tag=false)
+function _bump_version(
+    eff,
+    version = nothing;
+    project = "Project.toml",
+    commit = false,
+    tag = false,
+    limit_commit = true,
+)
     dry_run = isdryrun(eff)
     prj = TOML.parsefile(project)
 
@@ -114,7 +120,12 @@ function _bump_version(eff, version=nothing;
     end
     if commit
         msg = "Bump to $version"
-        _run(eff, `git commit -m $msg -- $project`)
+        commit_cmd = `git commit -m $msg`
+        if limit_commit
+            commit_cmd = `$commit_cmd -- $project`
+        end
+        _run(eff, `git add -- $project`)
+        _run(eff, commit_cmd)
         if tag
             _run(eff, `git tag $(versiontag(version))`)
         end
@@ -145,6 +156,7 @@ function _replace_commits_since(
     eff::SideEffect,
     version;
     readme_path::String = "README.md",
+    git_add = false,
 )
     orig = read(readme_path, String)
     origmatch = match(rx_commits_since, orig)
@@ -159,7 +171,11 @@ function _replace_commits_since(
         tag = versiontag(version),
     ))
     message_readme_change(readme)
-    return write_replace_commits_since(eff, readme)
+    write_replace_commits_since(eff, readme)
+    if git_add
+        _run(eff, `git add -- $readme_path`)
+    end
+    return readme
 end
 
 const rx_commits_since =
@@ -245,9 +261,9 @@ function _start_release(
 
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
-    _replace_commits_since(eff, version)
     if bump_version
-        prj = _bump_version(eff, version; commit=true, tag=true)
+        _replace_commits_since(eff, version; git_add=true)
+        prj = _bump_version(eff, version; commit=true, tag=true, limit_commit=false)
     else
         prj = TOML.parsefile(project)
         if !haskey(prj, "version")
