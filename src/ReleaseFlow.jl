@@ -224,7 +224,7 @@ Start release process.
 * Checkout the release branch.
 * Bump the version from vX.Y.Z-DEV to vX.Y.Z.
 * Push the release branch.
-* Open a PR to trigger `@JuliaRegistrator` bot.
+* Open an issue to trigger `@JuliaRegistrator` bot.
 
 # Arguments
 - `version::Union{VersionNumber,Nothing}`
