@@ -262,8 +262,8 @@ function _start_release(
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
     if bump_version
-        _replace_commits_since(eff, version; git_add=true)
         prj = _bump_version(eff, version; commit=true, tag=true, limit_commit=false)
+        _replace_commits_since(eff, VersionNumber(prj["version"]); git_add=true)
     else
         prj = TOML.parsefile(project)
         if !haskey(prj, "version")
