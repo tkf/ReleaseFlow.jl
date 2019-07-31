@@ -277,7 +277,7 @@ function _start_release(
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
     if bump_version
-        prj = _bump_version(eff, version; tag=true, commit=false)
+        prj = _bump_version(eff, version; commit=false)
         newversion = VersionNumber(prj["version"])
         _replace_commits_since(eff, newversion; git_add=true)
         _commit_bump_version(eff, newversion, limit_commit=false)
