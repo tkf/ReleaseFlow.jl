@@ -119,18 +119,33 @@ function _bump_version(
         write_project(prj, project)
     end
     if commit
-        msg = "Bump to $version"
-        commit_cmd = `git commit -m $msg`
-        if limit_commit
-            commit_cmd = `$commit_cmd -- $project`
-        end
-        _run(eff, `git add -- $project`)
-        _run(eff, commit_cmd)
-        if tag
-            _run(eff, `git tag $(versiontag(version))`)
-        end
+        _commit_bump_version(
+            eff,
+            version;
+            project = project,
+            limit_commit = limit_commit,
+        )
+    end
+    if tag
+        _run(eff, `git tag $(versiontag(version))`)
     end
     return prj
+end
+
+function _commit_bump_version(
+    eff,
+    version;
+    project = "Project.toml",
+    limit_commit = limit_commit,
+)
+    msg = "Bump to $version"
+    commit_cmd = `git commit -m $msg`
+    if limit_commit
+        commit_cmd = `$commit_cmd -- $project`
+    end
+    _run(eff, `git add -- $project`)
+    _run(eff, commit_cmd)
+    return
 end
 
 """
@@ -262,8 +277,10 @@ function _start_release(
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
     if bump_version
-        prj = _bump_version(eff, version; commit=true, tag=true, limit_commit=false)
-        _replace_commits_since(eff, VersionNumber(prj["version"]); git_add=true)
+        prj = _bump_version(eff, version; tag=true, commit=false)
+        newversion = VersionNumber(prj["version"])
+        _replace_commits_since(eff, newversion; git_add=true)
+        _commit_bump_version(eff, newversion, limit_commit=false)
     else
         prj = TOML.parsefile(project)
         if !haskey(prj, "version")
