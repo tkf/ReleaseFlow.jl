@@ -300,6 +300,9 @@ function _start_release(
         eff, repo;
         title = "Release $(prj["version"])",
         body = "@JuliaRegistrator `register(branch=$release_branch)`",
+        # Avoid including this issue in the release notes.  See:
+        # https://github.com/JuliaRegistries/TagBot#release-notes
+        labels = "no changelog",
     )
     return
 end
@@ -340,6 +343,12 @@ escape_query_params(query) =
         string(key, "=", escape_form(value)) for (key, value) in query
     ], "&")
 
+"""
+    github_new_issue_uri(repo; query...)
+
+For usable `query`, see:
+https://help.github.com/en/articles/about-automation-for-issues-and-pull-requests-with-query-parameters
+"""
 function github_new_issue_uri(repo; query...)
     url = URI("https://github.com/$repo/issues/new")
     return @set url.query = escape_query_params(query)
