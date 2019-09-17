@@ -329,13 +329,7 @@ function _finish_release(eff; release_branch="release", project="Project.toml")
     _run(eff, `git checkout master`)
     _run(eff, `git merge $release_branch`)
     _run(eff, `git branch --delete $release_branch`)
-    if eff === DryRun()
-        tag = "vX.X.X"
-    else
-        prj = TOML.parsefile(project)
-        tag = versiontag(VersionNumber(prj["version"]))
-    end
-    _run(eff, `git push origin master $tag`)
+    _run(eff, `git push origin master`)
 end
 
 escape_query_params(query) =
