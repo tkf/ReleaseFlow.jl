@@ -84,6 +84,7 @@ function _bump_version(
     commit = false,
     tag = false,
     limit_commit = true,
+    for_release = true,
 )
     dry_run = isdryrun(eff)
     prj = TOML.parsefile(project)
@@ -99,12 +100,18 @@ function _bump_version(
             be guessed from the previous version.
             """)
         end
-        if prev.prerelease == ()
+        if for_release
             version = prev
-            @set! version.prerelease = ("DEV",)
-            @set! version.patch += 1
+            prev.prerelease == () && @set! version.patch += 1
+            @set! version.prerelease = ()
         else
-            version = @set prev.prerelease = ()
+            if prev.prerelease == ()
+                version = prev
+                @set! version.prerelease = ("DEV",)
+                @set! version.patch += 1
+            else
+                version = @set prev.prerelease = ()
+            end
         end
     end
     if prev !== nothing && version <= prev
@@ -281,7 +288,7 @@ function _start_release(
     _run(eff, `git checkout -b $release_branch`)
     assert_clean_repo(eff)
     if bump_version
-        prj = _bump_version(eff, version; commit=false)
+        prj = _bump_version(eff, version; commit=false, for_release=true)
         newversion = VersionNumber(prj["version"])
         _replace_commits_since(eff, newversion; git_add=true)
         _commit_bump_version(eff, newversion, limit_commit=false)
