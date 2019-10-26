@@ -42,6 +42,10 @@ function assert_clean_repo(eff)
     end
 end
 
+_versionnumber(v::VersionNumber) = v
+_versionnumber(v::AbstractString) = VersionNumber(v)
+_versionnumber(v::Nothing) = v
+
 versiontag(version::VersionNumber) = string("v", version)
 
 """
@@ -50,7 +54,7 @@ versiontag(version::VersionNumber) = string("v", version)
 Bump version to `version`.
 
 # Arguments
-- `version::Union{VersionNumber,Nothing}`
+- `version::Union{VersionNumber, AbstractString, Nothing}`
 
 # Keyword Arguments
 - `project::String`
@@ -58,7 +62,7 @@ Bump version to `version`.
 - `dry_run::Bool`
 """
 function bump_version(
-    version::Union{VersionNumber, Nothing} = nothing;
+    version::Union{VersionNumber, AbstractString, Nothing} = nothing;
     dry_run::Bool = false,
     commit::Bool = false,
     kwargs...
@@ -68,7 +72,7 @@ function bump_version(
         assert_clean_repo(eff)
     end
     return _bump_version(
-        eff, version;
+        eff, _versionnumber(version);
         commit = commit,
         kwargs...)
 end
@@ -242,7 +246,7 @@ Start release process.
 * Open an issue to trigger `@JuliaRegistrator` bot.
 
 # Arguments
-- `version::Union{VersionNumber,Nothing}`
+- `version::Union{VersionNumber, AbstractString, Nothing}`
 
 # Keyword Arguments
 - `dry_run::Bool`
@@ -250,13 +254,13 @@ Start release process.
 - `bump_version::Bool = true`
 """
 start_release(
-    version::Union{VersionNumber, Nothing} = nothing;
+    version::Union{VersionNumber, AbstractString, Nothing} = nothing;
     dry_run::Bool = false,
     kwargs...
 ) =
     _start_release(
         dry_run ? DryRun() : Perform(),
-        version;
+        _versionnumber(version);
         kwargs...)
 
 function _start_release(
