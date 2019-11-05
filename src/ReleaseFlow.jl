@@ -60,6 +60,7 @@ Bump version to `version`.
 - `project::String`
 - `commit::Bool`
 - `dry_run::Bool`
+- `for_release::Bool = false`: If `true`, do not bump to a `-DEV` version.
 """
 function bump_version(
     version::Union{VersionNumber, AbstractString, Nothing} = nothing;
@@ -84,7 +85,7 @@ function _bump_version(
     commit = false,
     tag = false,
     limit_commit = true,
-    for_release = true,
+    for_release = false,
 )
     dry_run = isdryrun(eff)
     prj = TOML.parsefile(project)
