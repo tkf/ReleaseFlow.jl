@@ -58,8 +58,10 @@ Bump version to `version`.
 
 # Keyword Arguments
 - `project::String`
-- `commit::Bool`
-- `dry_run::Bool`
+- `commit::Bool = false`: Commit change.
+- `tag::Bool = false`: Run `git tag`.
+- `dry_run::Bool = false`: Print operations to be performed.
+- `limit_commit::Bool = true`: Only commit the change to `Project.toml` file.
 - `for_release::Bool = false`: If `true`, do not bump to a `-DEV` version.
 """
 function bump_version(
