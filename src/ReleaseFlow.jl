@@ -334,14 +334,24 @@ Finalize release process.
 - `dry_run::Bool`
 - `release_branch::String`
 - `project::String`
+- `ff_only::Bool = true`
 """
 finish_release(; dry_run=false, kwargs...) =
     _finish_release(dry_run ? DryRun() : Perform(); kwargs...)
 
-function _finish_release(eff; release_branch="release", project="Project.toml")
+function _finish_release(
+    eff;
+    release_branch = "release",
+    project = "Project.toml",
+    ff_only = true,
+)
     assert_clean_repo(eff)
     _run(eff, `git checkout master`)
-    _run(eff, `git merge $release_branch`)
+    git_merge = `git merge $release_branch`
+    if ff_only
+        git_merge = `$git_merge --ff-only`
+    end
+    _run(eff, git_merge)
     _run(eff, `git branch --delete $release_branch`)
     _run(eff, `git push origin master`)
 end
