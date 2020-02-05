@@ -326,6 +326,7 @@ end
 
 Finalize release process.
 
+* Check that release branch is tagged.
 * Merge release branch to `master`.
 * Remove the release branch.
 * Push `master` and the tag.
@@ -345,6 +346,22 @@ function _finish_release(
     project = "Project.toml",
     ff_only = true,
 )
+    _run(eff, `git fetch origin`)
+
+    prj = TOML.parse(read(`git show $release_branch:Project.toml`, String))
+    version = prj["version"]
+    tags = readlines(`git tag`)
+    if "v$version" in tags
+        @info "✔ Tag `v$version` exists."
+    else
+        _error(eff, "Tag `v$version` does not exist.")
+    end
+    if success(`git merge-base --is-ancestor v$version $release_branch`)
+        @info "✔ Tag `v$version` is accessible from branch `$release_branch`."
+    else
+        _error(eff, "Tag `v$version` is not ancestor of `$release_branch`.")
+    end
+
     assert_clean_repo(eff)
     _run(eff, `git checkout master`)
     git_merge = `git merge $release_branch`
