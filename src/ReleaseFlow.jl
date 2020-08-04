@@ -262,6 +262,9 @@ Start release process.
 - `dry_run::Bool`
 - `release_branch::String`
 - `bump_version::Bool = true`
+- `push::Bool = true`: push `release_branch` if `true`
+- `open_browser::Bool = true`: open a page for posting an issue in the
+  web browser
 """
 start_release(
     version::Union{VersionNumber, AbstractString, Nothing} = nothing;
@@ -278,6 +281,8 @@ function _start_release(
     version;
     release_branch = "release",
     bump_version = true,
+    push = true,
+    open_browser = true,
 )
     # Maybe move `project` to keyword argument.  However, all code
     # below now assumes that cwd is in the project.  This assumption
@@ -309,7 +314,15 @@ function _start_release(
             julia = "1"
         """)
     end
+    if !push
+        @info "Skip pushing."
+        return
+    end
     _run(eff, `git push -u origin $release_branch`)
+    if !open_browser
+        @info "Skip opening browser for invoking `@JuliaRegistrator`."
+        return
+    end
     _github_new_issue(
         eff, repo;
         title = "Release $(prj["version"])",
