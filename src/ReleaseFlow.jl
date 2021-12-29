@@ -340,15 +340,16 @@ end
 Finalize release process.
 
 * Check that release branch is tagged.
-* Merge release branch to `master`.
+* Merge release branch to `main`.
 * Remove the release branch.
-* Push `master` and the tag.
+* Push `main` and the tag.
 
 # Keyword Arguments
 - `dry_run::Bool`
 - `release_branch::String`
 - `project::String`
 - `ff_only::Bool = true`
+- `main::AbstractString` (default: "main" or "master")
 """
 finish_release(; dry_run=false, kwargs...) =
     _finish_release(dry_run ? DryRun() : Perform(); kwargs...)
@@ -358,6 +359,7 @@ function _finish_release(
     release_branch = "release",
     project = "Project.toml",
     ff_only = true,
+    main = guess_main(),
 )
     _run(eff, `git fetch origin`)
 
@@ -376,14 +378,27 @@ function _finish_release(
     end
 
     assert_clean_repo(eff)
-    _run(eff, `git checkout master`)
+    _run(eff, `git checkout $main`)
     git_merge = `git merge $release_branch`
     if ff_only
         git_merge = `$git_merge --ff-only`
     end
     _run(eff, git_merge)
     _run(eff, `git branch --delete $release_branch`)
-    _run(eff, `git push origin master`)
+    _run(eff, `git push origin $main`)
+end
+
+function guess_main(candidates = ["main", "master"])
+    branches =
+        Set(eachline(IOBuffer(read(`git branch --list '--format=%(refname:short)'`))))
+    mains = sort!(collect(intersect(branches, candidates)))
+    if length(mains) == 1
+        return mains[1]
+    elseif length(mains) == 0
+        error("no main branch found")
+    else
+        error("multiple possibly main branches found: ", join(mains, ", "))
+    end
 end
 
 escape_query_params(query) =
